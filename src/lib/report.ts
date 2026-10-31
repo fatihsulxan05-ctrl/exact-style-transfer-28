@@ -13,6 +13,27 @@ export const PERIODS: { key: Period; label: string }[] = [
 
 export type Range = { start: string; end: string };
 
+export const PAPER_COLUMNS = [...VAKITLER, "Ders"];
+
+/** Blank paper charts never derive absence marks from missing attendance. */
+export function buildBlankChart(students: Pick<Student, "id" | "name">[], range: Range) {
+  const days: string[] = [];
+  const cursor = new Date(`${range.start}T00:00:00Z`);
+  const end = new Date(`${range.end}T00:00:00Z`);
+  if (!Number.isFinite(cursor.getTime()) || !Number.isFinite(end.getTime()) || cursor > end) throw new Error("Tarih aralığı geçersiz.");
+  while (cursor <= end) {
+    days.push(cursor.toISOString().slice(0, 10));
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  return {
+    days,
+    columns: PAPER_COLUMNS,
+    rows: [...students].sort((a, b) => a.name.localeCompare(b.name, "tr")).map((s) => ({
+      studentId: s.id, name: s.name, days: days.map(() => PAPER_COLUMNS.map(() => "")),
+    })),
+  };
+}
+
 const pad = (n: number) => String(n).padStart(2, "0");
 const toKey = (d: Date) => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
 const parse = (s: string) => new Date(`${s}T00:00:00Z`);

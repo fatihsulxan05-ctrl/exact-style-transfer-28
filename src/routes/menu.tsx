@@ -3,6 +3,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { Download, Upload, FileDown, UserPlus } from "@/components/app/icons";
 import { ReportSheet } from "@/components/app/ReportSheet";
+import { BlankAttendanceSheet } from "@/components/app/BlankAttendanceSheet";
+import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/app/Sheet";
 import { StudentForm, emptyStudent } from "@/components/app/StudentForm";
 import { PhotoNamesImport } from "@/components/app/PhotoNamesImport";
@@ -16,6 +18,8 @@ export const Route = createFileRoute("/menu")({
       { name: "description", content: "Kur'an kursu verilerini yedekleyin ve geri yükleyin." },
       { property: "og:title", content: "Menü — Kur'an Kursu" },
       { property: "og:description", content: "Kur'an kursu verilerini yedekleyin ve geri yükleyin." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Menu,
@@ -26,6 +30,7 @@ function Menu() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [msg, setMsg] = useState("");
   const [reportOpen, setReportOpen] = useState(false);
+  const [blankOpen, setBlankOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
 
   const exportData = async () => {
@@ -67,6 +72,8 @@ function Menu() {
         </Sheet>
         <button onClick={() => setReportOpen(true)} className={btn}><FileDown className="h-5 w-5 text-primary" /> Yoklama Raporu İndir (PDF / Excel)</button>
         <ReportSheet open={reportOpen} onClose={() => setReportOpen(false)} />
+        <Button variant="outline" onClick={() => setBlankOpen(true)} className="h-auto w-full justify-start whitespace-normal py-4"><FileDown className="text-primary" /> Boş Yoklama Çizelgesi İndir (PDF / Excel)</Button>
+        <BlankAttendanceSheet open={blankOpen} onClose={() => setBlankOpen(false)} />
         <button onClick={exportData} className={btn}><Download className="h-5 w-5 text-primary" /> Verileri Yedekle (indir)</button>
         <button onClick={() => fileRef.current?.click()} className={btn}><Upload className="h-5 w-5 text-primary" /> Yedeği Geri Yükle</button>
         <input ref={fileRef} type="file" accept="application/json" className="hidden" onChange={(e) => importData(e.target.files?.[0])} />

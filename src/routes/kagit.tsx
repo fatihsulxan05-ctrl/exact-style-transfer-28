@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Avatar } from "@/components/app/AppShell";
+import { BlankAttendanceSheet } from "@/components/app/BlankAttendanceSheet";
+import { Button } from "@/components/ui/button";
 import { useStore } from "@/lib/store";
 import { VAKITLER } from "@/lib/stats";
 import { localIso } from "@/lib/utils";
@@ -15,6 +17,8 @@ export const Route = createFileRoute("/kagit")({
       { name: "description", content: "Kâğıt yoklamanın fotoğrafını yükleyin, yapay zekâ kayıtları çıkarsın." },
       { property: "og:title", content: "Kâğıt Yoklama — Kur'an Kursu" },
       { property: "og:description", content: "Kâğıt yoklamanın fotoğrafını yükleyin, yapay zekâ kayıtları çıkarsın." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Kagit,
@@ -32,7 +36,9 @@ async function toDataUrl(file: File): Promise<string> {
   const c = document.createElement("canvas");
   c.width = Math.round(bmp.width * scale);
   c.height = Math.round(bmp.height * scale);
-  c.getContext("2d")!.drawImage(bmp, 0, 0, c.width, c.height);
+  const context = c.getContext("2d");
+  if (!context) { bmp.close(); throw new Error("Fotoğraf hazırlanamadı."); }
+  context.drawImage(bmp, 0, 0, c.width, c.height);
   bmp.close();
   return c.toDataURL("image/jpeg", 0.85);
 }
@@ -62,6 +68,7 @@ function Kagit() {
   const [error, setError] = useState("");
   const [rows, setRows] = useState<PaperRow[] | null>(null);
   const [saved, setSaved] = useState(false);
+  const [blankOpen, setBlankOpen] = useState(false);
   const nameOf = (id: string) => students.find((s) => s.id === id)?.name ?? "?";
 
   const addFiles = (list: FileList | null) => {
@@ -86,7 +93,7 @@ function Kagit() {
   };
 
   const toggle = (i: number, c: string) => {
-    setRows((rs) => rs!.map((r, j) => j !== i ? r : c === "Ders" ? { ...r, ders: !r.ders } : { ...r, vakitler: r.vakitler.includes(c) ? r.vakitler.filter((v) => v !== c) : VAKITLER.filter((v) => v === c || r.vakitler.includes(v)) }));
+    setRows((rs) => rs?.map((r, j) => j !== i ? r : c === "Ders" ? { ...r, ders: !r.ders } : { ...r, vakitler: r.vakitler.includes(c) ? r.vakitler.filter((v) => v !== c) : VAKITLER.filter((v) => v === c || r.vakitler.includes(v)) }) ?? null);
     setSaved(false);
   };
 
@@ -100,6 +107,8 @@ function Kagit() {
   return (
     <>
       <h2 className="mt-7 font-serif text-3xl font-bold">Kâğıt Yoklama</h2>
+      <Button variant="outline" onClick={() => setBlankOpen(true)} className="mt-4 h-auto w-full whitespace-normal py-3"><FileText />Boş Yoklama Çizelgesi İndir (PDF / Excel)</Button>
+      <BlankAttendanceSheet open={blankOpen} onClose={() => setBlankOpen(false)} />
       <p className="mt-2 text-sm text-muted-foreground">Haftalık veya aylık kâğıt yoklamanın fotoğrafını yükleyin — yapay zekâ kayıtları çıkarır, kontrol edip kaydedersiniz.</p>
       <div className="mt-5 rounded-2xl border border-border bg-card p-5">
         <h3 className="flex items-center gap-3 font-serif text-lg font-bold"><FileText className="h-5 w-5 text-primary" /> Kâğıt Yoklama (Haftalık / Aylık)</h3>
