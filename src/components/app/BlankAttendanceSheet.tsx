@@ -33,10 +33,10 @@ export function BlankAttendanceSheet({ open, onClose }: { open: boolean; onClose
   }, [open, selected, range, format, key]);
   const file = ready?.key === key ? ready : null;
   return <Sheet open={open} onClose={onClose} title="Boş Yoklama Çizelgesi İndir">
-    <Field label="Dönem"><div className="grid grid-cols-3 gap-2">{([['gunluk', 'Günlük'], ['haftalik', 'Haftalık'], ['aylik', 'Aylık']] as const).map(([p, label]) => <Button key={p} variant={p === period ? "default" : "outline"} onClick={() => setPeriod(p)} aria-pressed={p === period}>{label}</Button>)}</div></Field>
+    <Field label="Dönem"><div className="grid grid-cols-3 gap-2">{([['gunluk', 'Günlük'], ['haftalik', 'Haftalık'], ['aylik', 'Aylık']] as const).map(([p, label]) => <Button key={p} aria-label={label} variant={p === period ? "default" : "outline"} onClick={() => setPeriod(p)} aria-pressed={p === period}>{label}</Button>)}</div></Field>
     <Field label="Tarih"><input aria-label="Çizelge tarihi" type="date" className={inputCls} value={date} onChange={(e) => { if (e.target.value) setDate(e.target.value); }} /></Field>
     <Field label="Talebe"><select className={inputCls} value={studentId} onChange={(e) => setStudentId(e.target.value)}><option value="">Tüm talebeler</option>{students.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></Field>
-    <Field label="Biçim"><div className="grid grid-cols-2 gap-2"><Button variant={format === "pdf" ? "default" : "outline"} onClick={() => setFormat("pdf")} aria-pressed={format === "pdf"}><FileText />PDF</Button><Button variant={format === "xlsx" ? "default" : "outline"} onClick={() => setFormat("xlsx")} aria-pressed={format === "xlsx"}><FileSpreadsheet />Excel</Button></div></Field>
+    <Field label="Biçim"><div className="grid grid-cols-2 gap-2"><Button aria-label="PDF" variant={format === "pdf" ? "default" : "outline"} onClick={() => setFormat("pdf")} aria-pressed={format === "pdf"}><FileText />PDF</Button><Button aria-label="Excel" variant={format === "xlsx" ? "default" : "outline"} onClick={() => setFormat("xlsx")} aria-pressed={format === "xlsx"}><FileSpreadsheet />Excel</Button></div></Field>
     <div className="mb-4 text-sm"><p className="font-medium">{rangeLabel(range)}</p><p className="text-muted-foreground">{selected.length} talebe · Namaz ve ders</p></div>
     {!selected.length && <p className="mb-3 text-sm text-destructive">Önce talebe ekleyin.</p>}
     {error && <p role="alert" className="mb-3 text-sm text-destructive">{error}</p>}
