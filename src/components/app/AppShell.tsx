@@ -34,13 +34,14 @@ export function AppShell({ children }: { children: ReactNode }) {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-card text-primary">
               <BookOpen className="h-4 w-4" />
             </div>
-            <div>
-              <h1 className="font-serif text-lg font-bold leading-tight text-primary-foreground">TALEBE TAKİP PANELİ</h1>
+            <div className="leading-none">
+              <p className="text-[11px] font-bold tracking-[0.35em] text-primary-foreground/75">SİEC</p>
+              <h1 className="mt-1 font-serif text-lg font-bold leading-tight text-primary-foreground">TALEBE TAKİP PANELİ</h1>
             </div>
           </div>
         </header>
       </div>
-      <main className="px-4 pt-[72px]">{children}</main>
+      <main className="px-4 pt-[84px]">{children}</main>
       <LiquidTabBar tabs={tabs} />
 
     </div>
