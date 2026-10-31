@@ -14,6 +14,8 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Kur'an kursu talebe listesi ve durum takibi." },
       { property: "og:title", content: "Talebeler — Kur'an Kursu" },
       { property: "og:description", content: "Kur'an kursu talebe listesi ve durum takibi." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Index,
@@ -37,13 +39,11 @@ function Index() {
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Talebe ara..." className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground" />
       </div>
       {students.length === 0 ? (
-        <>
         <div className="mt-6 rounded-2xl border border-dashed border-border bg-card p-8 text-center">
           <Users className="mx-auto h-10 w-10 text-muted-foreground" />
           <p className="mt-3 font-serif text-lg font-bold">Henüz talebe yok</p>
           <p className="mt-1 text-sm text-muted-foreground">Talebe eklemek için Menü'deki "Talebe Ekle" düğmesini kullanın.</p>
         </div>
-        </>
       ) : (
         <>
           <div className="mt-4 flex items-center justify-between rounded-t-lg bg-brand-soft px-5 py-2.5 text-sm text-muted-foreground">

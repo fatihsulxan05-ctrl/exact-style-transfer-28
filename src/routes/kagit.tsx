@@ -17,6 +17,8 @@ export const Route = createFileRoute("/kagit")({
       { name: "description", content: "Kâğıt yoklamanın fotoğrafını yükleyin, yapay zekâ kayıtları çıkarsın." },
       { property: "og:title", content: "Kâğıt Yoklama — Kur'an Kursu" },
       { property: "og:description", content: "Kâğıt yoklamanın fotoğrafını yükleyin, yapay zekâ kayıtları çıkarsın." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Kagit,

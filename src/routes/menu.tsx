@@ -18,6 +18,8 @@ export const Route = createFileRoute("/menu")({
       { name: "description", content: "Kur'an kursu verilerini yedekleyin ve geri yükleyin." },
       { property: "og:title", content: "Menü — Kur'an Kursu" },
       { property: "og:description", content: "Kur'an kursu verilerini yedekleyin ve geri yükleyin." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Menu,
