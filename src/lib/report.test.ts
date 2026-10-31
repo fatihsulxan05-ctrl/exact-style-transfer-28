@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildChart, chartByMonth, buildReport, fileSlug, filterRows, periodRange } from "./report";
+import { buildBlankChart, buildChart, chartByMonth, buildReport, fileSlug, filterRows, periodRange } from "./report";
 import type { AttendanceRow, Student } from "./store";
 
 const row = (id: string, date: string, vakitler: string[], ders = false, durum: AttendanceRow["durum"] = "normal"): AttendanceRow => ({ id, studentId: "s1", date, vakitler, ders, durum });
@@ -9,6 +9,19 @@ const rows = [
   row("3", "2026-10-28", [], false, "izinli"),
   row("4", "2026-11-02", ["Akşam"], true, "gec"),
 ];
+
+describe("blank paper attendance", () => {
+  it("includes all registered students without any attendance records", () => {
+    const chart = buildBlankChart([{ id: "b", name: "Bekir" }, { id: "a", name: "Ali" }], { start: "2026-10-31", end: "2026-11-01" });
+    expect(chart.rows.map((s) => s.studentId)).toEqual(["a", "b"]);
+    expect(chart.days).toEqual(["2026-10-31", "2026-11-01"]);
+  });
+  it("leaves all five prayers and lesson cells blank for paper marking", () => {
+    const chart = buildBlankChart([{ id: "a", name: "Ali" }], { start: "2026-10-31", end: "2026-10-31" });
+    expect(chart.columns).toEqual(["Sabah", "Öğle", "İkindi", "Akşam", "Yatsı", "Ders"]);
+    expect(chart.rows[0]?.days).toEqual([["", "", "", "", "", ""]]);
+  });
+});
 
 describe("report periods", () => {
   it("daily covers only the chosen day", () => {

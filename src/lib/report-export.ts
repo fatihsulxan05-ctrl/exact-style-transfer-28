@@ -1,5 +1,5 @@
 import { VAKITLER } from "./stats";
-import { chartByMonth, type buildChart, type buildReport } from "./report";
+import { chartByMonth, rangeLabel, type buildBlankChart, type buildChart, type buildReport } from "./report";
 
 type Report = ReturnType<typeof buildReport>;
 export type ExportInput = { report: Report; chart?: ReturnType<typeof buildChart>; title: string; rangeText: string; fileBase: string };
@@ -266,6 +266,80 @@ export async function makeXlsx({ report, chart, title, rangeText }: ExportInput)
 
   const out = XLSX.write(wb, { bookType: "xlsx", type: "array" }) as ArrayBuffer;
   return new Blob([out], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+}
+
+type BlankChart = ReturnType<typeof buildBlankChart>;
+
+/** Seven-day blocks keep six writable cells per date legible on A4 landscape. */
+export async function makeBlankPdf(chart: BlankChart): Promise<Blob> {
+  const [{ jsPDF }, { default: autoTable }, [regular, bold]] = await Promise.all([import("jspdf"), import("jspdf-autotable"), loadFonts()]);
+  const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "landscape" });
+  doc.addFileToVFS("DejaVuSans.ttf", regular); doc.addFont("DejaVuSans.ttf", "DejaVu", "normal");
+  doc.addFileToVFS("DejaVuSans-Bold.ttf", bold); doc.addFont("DejaVuSans-Bold.ttf", "DejaVu", "bold");
+  for (let offset = 0; offset < chart.days.length; offset += 7) {
+    if (offset) doc.addPage("a4", "landscape");
+    const days = chart.days.slice(offset, offset + 7);
+    const start = days[0], end = days.at(-1);
+    if (!start || !end) continue;
+    const heading = () => {
+      doc.setFont("DejaVu", "bold"); doc.setFontSize(16); doc.setTextColor(34, 99, 74);
+      doc.text("SİEC", 10, 10);
+      doc.setFontSize(9); doc.text("Talebe Takip Paneli · Boş Yoklama Çizelgesi", 10, 16);
+      doc.setFont("DejaVu", "normal"); doc.setFontSize(9); doc.setTextColor(0);
+      doc.text(rangeLabel({ start, end }), 287, 14, { align: "right" });
+    };
+    const cellWidth = (277 - 8 - 51) / (days.length * chart.columns.length);
+    autoTable(doc, {
+      startY: 22, margin: { top: 22, bottom: 14, left: 10, right: 10 }, theme: "grid",
+      styles: { font: "DejaVu", fontSize: 6, lineColor: 0, lineWidth: 0.15, cellPadding: 1, halign: "center", valign: "middle", minCellHeight: 7 },
+      headStyles: { fillColor: [229, 241, 235], textColor: 0, fontStyle: "bold" },
+      columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 51, halign: "left", fontSize: 8 }, ...Object.fromEntries(days.flatMap((_, d) => chart.columns.map((_, c) => [2 + d * chart.columns.length + c, { cellWidth }]))) },
+      head: [
+        [{ content: "No", rowSpan: 2 }, { content: "Adı Soyadı", rowSpan: 2 }, ...days.map((d) => ({ content: dayLabel(d), colSpan: chart.columns.length }))],
+        days.flatMap(() => chart.columns),
+      ],
+      body: chart.rows.map((r, i) => [String(i + 1), r.name, ...r.days.slice(offset, offset + 7).flat()]),
+      willDrawPage: heading,
+    });
+  }
+  for (let i = 1; i <= doc.getNumberOfPages(); i++) {
+    doc.setPage(i); doc.setFont("DejaVu", "normal"); doc.setFontSize(8); doc.setTextColor(0);
+    doc.text("Katılım: ✓ veya +  ·  Katılmadı: boş hücre", 10, 203);
+    doc.text(`SİEC · ${i}/${doc.getNumberOfPages()}`, 287, 203, { align: "right" });
+  }
+  return doc.output("blob");
+}
+
+export async function makeBlankXlsx(chart: BlankChart): Promise<Blob> {
+  const XLSX = await import("xlsx-js-style");
+  const wb = XLSX.utils.book_new();
+  const thin = { style: "thin", color: { rgb: "000000" } };
+  for (let offset = 0; offset < chart.days.length; offset += 7) {
+    const days = chart.days.slice(offset, offset + 7), width = 2 + days.length * chart.columns.length;
+    const start = days[0], end = days.at(-1);
+    if (!start || !end) continue;
+    const ws = XLSX.utils.aoa_to_sheet([
+      ["SİEC · Talebe Takip Paneli · Boş Yoklama Çizelgesi"], [rangeLabel({ start, end })],
+      ["No", "Adı Soyadı", ...days.flatMap((d) => [dayLabel(d), ...chart.columns.slice(1).map(() => "")])],
+      ["", "", ...days.flatMap(() => chart.columns)],
+      ...chart.rows.map((r, i) => [i + 1, r.name, ...r.days.slice(offset, offset + 7).flat()]),
+      ["Katılım: ✓ veya + · Katılmadı: boş hücre"],
+    ]);
+    const merges = [0, 1, chart.rows.length + 4].map((r) => ({ s: { r, c: 0 }, e: { r, c: width - 1 } }));
+    merges.push(...days.map((_, i) => ({ s: { r: 2, c: 2 + i * chart.columns.length }, e: { r: 2, c: 1 + (i + 1) * chart.columns.length } })));
+    for (let r = 0; r < chart.rows.length + 5; r++) for (let c = 0; c < width; c++) {
+      const key = XLSX.utils.encode_cell({ r, c });
+      const cell = ws[key] ?? { v: "", t: "s" };
+      cell.s = { font: { name: "Arial", sz: r === 0 ? 14 : 9, bold: r < 4 }, alignment: { horizontal: c === 1 ? "left" : "center", vertical: "center", wrapText: true, ...(r === 3 && c >= 2 ? { textRotation: 90 } : {}) }, ...(r >= 2 && r < chart.rows.length + 4 ? { border: { top: thin, bottom: thin, left: thin, right: thin } } : {}), ...(r === 2 || r === 3 ? { fill: { fgColor: { rgb: "E5F1EB" } } } : {}) };
+      ws[key] = cell;
+    }
+    ws["!merges"] = merges;
+    ws["!cols"] = [{ wch: 4 }, { wch: 28 }, ...days.flatMap(() => chart.columns.map(() => ({ wch: 3.5 })))];
+    ws["!rows"] = [{ hpt: 26 }, { hpt: 22 }, { hpt: 22 }, { hpt: 45 }, ...chart.rows.map(() => ({ hpt: 26 }))];
+    ws["!ref"] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: chart.rows.length + 4, c: width - 1 } });
+    XLSX.utils.book_append_sheet(wb, ws, `Çizelge ${Math.floor(offset / 7) + 1}`);
+  }
+  return new Blob([XLSX.write(wb, { bookType: "xlsx", type: "array" })], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
 }
 
 export function downloadBlob(blob: Blob, filename: string) {

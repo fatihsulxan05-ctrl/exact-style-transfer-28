@@ -3,6 +3,9 @@ import { useState } from "react";
 import { Search, User, GraduationCap, Users } from "@/components/app/icons";
 import { Avatar } from "@/components/app/AppShell";
 import { useStore } from "@/lib/store";
+import { BlankAttendanceSheet } from "@/components/app/BlankAttendanceSheet";
+import { Button } from "@/components/ui/button";
+import { FileDown } from "@/components/app/icons";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -19,6 +22,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   const { students } = useStore();
   const [q, setQ] = useState("");
+  const [blankOpen, setBlankOpen] = useState(false);
   const list = students.filter((s) => s.name.toLocaleLowerCase("tr").includes(q.toLocaleLowerCase("tr")));
   return (
     <>
@@ -33,11 +37,13 @@ function Index() {
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Talebe ara..." className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground" />
       </div>
       {students.length === 0 ? (
+        <>
         <div className="mt-6 rounded-2xl border border-dashed border-border bg-card p-8 text-center">
           <Users className="mx-auto h-10 w-10 text-muted-foreground" />
           <p className="mt-3 font-serif text-lg font-bold">Henüz talebe yok</p>
           <p className="mt-1 text-sm text-muted-foreground">Talebe eklemek için Menü'deki "Talebe Ekle" düğmesini kullanın.</p>
         </div>
+        </>
       ) : (
         <>
           <div className="mt-4 flex items-center justify-between rounded-t-lg bg-brand-soft px-5 py-2.5 text-sm text-muted-foreground">
@@ -63,6 +69,8 @@ function Index() {
           </div>
         </>
       )}
+      <Button variant="outline" onClick={() => setBlankOpen(true)} className="mt-4 h-auto w-full whitespace-normal py-3"><FileDown />Boş Yoklama Çizelgesi İndir (PDF / Excel)</Button>
+      <BlankAttendanceSheet open={blankOpen} onClose={() => setBlankOpen(false)} />
     </>
   );
 }
